@@ -23,6 +23,7 @@
 }
 
 [data-theme="dark"] {
+  --primary-gradient: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   --bg-primary: #1e293b;
   --bg-secondary: #334155;
   --text-primary: #f1f5f9;
@@ -30,6 +31,91 @@
   --border-color: #475569;
   --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark mode body styling */
+[data-theme="dark"] body {
+  background: var(--primary-gradient);
+}
+
+[data-theme="dark"] header {
+  background: rgba(30, 41, 59, 0.3);
+  border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+[data-theme="dark"] .card {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .stat-item {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .notification-toast.success {
+  background: rgba(6, 78, 59, 0.95);
+  border-color: var(--success-color);
+  color: #a7f3d0;
+}
+
+[data-theme="dark"] .notification-toast.error {
+  background: rgba(127, 29, 29, 0.95);
+  border-color: var(--danger-color);
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .notification-toast.warning {
+  background: rgba(120, 53, 15, 0.95);
+  border-color: var(--warning-color);
+  color: #fde68a;
+}
+
+[data-theme="dark"] .priority-badge.high {
+  background: rgba(127, 29, 29, 0.3);
+  color: #fca5a5;
+  border: 1px solid #7f1d1d;
+}
+
+[data-theme="dark"] .priority-badge.medium {
+  background: rgba(120, 53, 15, 0.3);
+  color: #fde68a;
+  border: 1px solid #78350f;
+}
+
+[data-theme="dark"] .priority-badge.low {
+  background: rgba(6, 78, 59, 0.3);
+  color: #a7f3d0;
+  border: 1px solid #064e3b;
+}
+
+[data-theme="dark"] .shortcuts-content {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .shortcut-key {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .bulk-controls {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: var(--warning-color);
+}
+
+[data-theme="dark"] .bulk-counter {
+  color: #fde68a;
+}
+
+[data-theme="dark"] .todo-item.selected {
+  background: rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+}
+
+[data-theme="dark"] .todo-item.completed {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: var(--success-color);
 }
 
 * {
@@ -95,6 +181,10 @@ header h1 {
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
   color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 .sound-toggle button:hover, .theme-toggle button:hover {
@@ -104,6 +194,7 @@ header h1 {
 
 .sound-toggle button.muted {
   opacity: 0.5;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .card {
@@ -142,6 +233,7 @@ header h1 {
   padding: 1rem;
   border-radius: 8px;
   box-shadow: var(--shadow-light);
+  transition: background-color 0.3s ease;
 }
 
 .stat-number {
@@ -328,8 +420,190 @@ header h1 {
   color: var(--text-primary);
   font-size: 1.1rem;
   font-weight: 600;
-  display: block;
+}
+
+/* === COMMENT STYLING === */
+.comment-section {
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.comment-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.75rem;
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #667eea;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.comment-content {
+  flex: 1;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.comment-author {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.comment-time {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.comment-text {
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+}
+
+.comment-image {
+  max-width: 150px;
+  max-height: 120px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-light);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  object-fit: cover;
+}
+
+.comment-image:hover {
+  transform: scale(1.05);
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.comment-delete {
+  background: var(--danger-color);
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.comment-delete:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+.comment-input-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  margin-top: 1rem;
+}
+
+.comment-input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.comment-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  resize: none;
+  min-height: 36px;
+  max-height: 100px;
+}
+
+.comment-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.photo-upload-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.photo-upload-btn {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.photo-upload-btn:hover {
+  background: var(--border-color);
+}
+
+.photo-preview {
+  max-width: 80px;
+  max-height: 60px;
+  border-radius: 6px;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.photo-preview-container {
+  position: relative;
+  display: inline-block;
+}
+
+.remove-photo {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--danger-color);
+  color: white;
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* === BULK OPERATIONS === */
@@ -397,6 +671,7 @@ header h1 {
   font-family: monospace;
   font-size: 0.875rem;
   text-align: center;
+  color: var(--text-primary);
 }
 
 /* === INPUT STYLES === */
@@ -532,6 +807,28 @@ button:active {
   }
 }
 
+/* === IMAGE MODAL === */
+.image-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  padding: 2rem;
+}
+
+.image-modal img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
   .container {
@@ -564,6 +861,16 @@ button:active {
   
   .sound-toggle { left: 1rem; }
   .theme-toggle { right: 1rem; }
+  
+  .comment-image {
+    max-width: 120px;
+    max-height: 100px;
+  }
+  
+  .photo-preview {
+    max-width: 60px;
+    max-height: 50px;
+  }
 }
 </style>
 
@@ -602,6 +909,11 @@ button:active {
       </div>
       <button onclick="closeShortcuts()" style="margin-top: 1rem; width: 100%;">Close</button>
     </div>
+  </div>
+
+  <!-- Image Modal -->
+  <div class="image-modal" id="imageModal" onclick="closeImageModal()">
+    <img id="modalImage" src="" alt="">
   </div>
 
   <div class="container">
@@ -1128,17 +1440,22 @@ function renderTodo(todo) {
     <div class="comment-box hidden" id="commentBox-${todo.id}" style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color);">
       <h4 style="color: var(--text-primary); margin-bottom: 1rem; font-size: 1rem;">💬 Komentar</h4>
       <div class="comment-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 1rem;"></div>
-      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-        <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
-          <input type="text" id="commentInput-${todo.id}" placeholder="Tulis komentar..." onkeypress="if(event.key==='Enter') sendComment(${todo.id})" style="flex: 1; margin-bottom: 0;">
-          <button onclick="sendComment(${todo.id})" style="padding: 0.75rem 1rem; margin-bottom: 0;">Kirim</button>
+      <div class="comment-input-area">
+        <div class="comment-input-row">
+          <textarea class="comment-input" id="commentInput-${todo.id}" placeholder="Tulis komentar..." onkeypress="if(event.key==='Enter'&&!event.shiftKey) { event.preventDefault(); sendComment(${todo.id}); }"></textarea>
+          <button onclick="sendComment(${todo.id})" style="padding: 0.5rem 1rem; margin-bottom: 0; height: fit-content;">Kirim</button>
+        </div>
+        <div class="photo-upload-section">
+          <input type="file" id="photoInput-${todo.id}" accept="image/*" onchange="handlePhotoUpload(${todo.id})" style="display: none;">
+          <button class="photo-upload-btn" onclick="document.getElementById('photoInput-${todo.id}').click()">📷</button>
+          <div id="photoPreview-${todo.id}"></div>
         </div>
       </div>
     </div>`;
   
   // Add click handler for task selection
   div.addEventListener('click', (e) => {
-    if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
+    if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
       if (e.ctrlKey || e.metaKey) {
         toggleTaskSelection(todo.id);
       }
@@ -1152,6 +1469,47 @@ function renderTodo(todo) {
   if (todo.comments) {
     todo.comments.forEach(c => appendComment(c, false));
   }
+}
+
+// Photo handling for comments
+function handlePhotoUpload(todoId) {
+  const input = document.getElementById(`photoInput-${todoId}`);
+  const file = input.files[0];
+  if (!file) return;
+  
+  // Validate file size (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    showNotification("File terlalu besar. Maksimal 5MB.", "error");
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const previewContainer = document.getElementById(`photoPreview-${todoId}`);
+    previewContainer.innerHTML = `
+      <div class="photo-preview-container">
+        <img src="${e.target.result}" alt="Photo preview" class="photo-preview" onclick="showImageModal('${e.target.result}')">
+        <button class="remove-photo" onclick="clearPhotoPreview(${todoId})">×</button>
+      </div>
+    `;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPhotoPreview(todoId) {
+  document.getElementById(`photoPreview-${todoId}`).innerHTML = '';
+  document.getElementById(`photoInput-${todoId}`).value = '';
+}
+
+function showImageModal(src) {
+  const modal = document.getElementById('imageModal');
+  const modalImage = document.getElementById('modalImage');
+  modalImage.src = src;
+  modal.style.display = 'flex';
+}
+
+function closeImageModal() {
+  document.getElementById('imageModal').style.display = 'none';
 }
 
 function toggleCompletion(todoId) {
@@ -1223,13 +1581,27 @@ function toggleComment(todoId) {
 
 function sendComment(todoId) {
   const text = document.getElementById("commentInput-" + todoId).value.trim();
-  if (!text) return;
+  const previewContainer = document.getElementById(`photoPreview-${todoId}`);
+  const photoImg = previewContainer.querySelector('img');
+  
+  if (!text && !photoImg) return;
 
-  const msg = { type: "comment", todoId, text, user: userName, timestamp: Date.now() };
+  const msg = { 
+    type: "comment", 
+    todoId, 
+    text, 
+    user: userName, 
+    timestamp: Date.now(),
+    image: photoImg ? photoImg.src : null
+  };
+  
   appendComment(msg);
   saveTodos();
   broadcast(msg);
+  
+  // Clear inputs
   document.getElementById("commentInput-" + todoId).value = "";
+  clearPhotoPreview(todoId);
 }
 
 function appendComment(msg, save = true) {
@@ -1237,35 +1609,69 @@ function appendComment(msg, save = true) {
   if (!list) return;
 
   const div = document.createElement("div");
-  div.style.cssText = "display: flex; align-items: flex-start; justify-content: space-between; background: var(--bg-primary); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; box-shadow: var(--shadow-light); border: 1px solid var(--border-color);";
+  div.className = "comment-item";
 
-  const left = document.createElement("div");
-  left.style.cssText = "flex: 1; word-break: break-word;";
+  const avatar = document.createElement("div");
+  avatar.className = "comment-avatar";
+  avatar.textContent = msg.user.charAt(0).toUpperCase();
 
-  const strongEl = document.createElement("strong");
-  strongEl.style.cssText = "color: #667eea; font-weight: 600; font-size: 0.875rem;";
-  strongEl.textContent = msg.user + ":";
+  const content = document.createElement("div");
+  content.className = "comment-content";
 
-  const span = document.createElement("span");
-  span.style.cssText = "color: var(--text-primary); font-size: 0.875rem; margin-left: 0.5rem;";
-  span.textContent = msg.text || "";
+  const header = document.createElement("div");
+  header.className = "comment-header";
 
-  left.appendChild(strongEl);
-  left.appendChild(span);
-  div.appendChild(left);
+  const author = document.createElement("div");
+  author.className = "comment-author";
+  author.textContent = msg.user;
 
-  if (role === "mentor") {
-    const del = document.createElement("button");
-    del.style.cssText = "background: var(--danger-color); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; margin-left: 0.5rem;";
-    del.innerHTML = "✖";
-    del.onclick = () => {
-      div.remove();
-      saveTodos();
-    };
-    div.appendChild(del);
+  const time = document.createElement("div");
+  time.className = "comment-time";
+  time.textContent = new Date(msg.timestamp).toLocaleString('id-ID');
+
+  header.appendChild(author);
+  header.appendChild(time);
+
+  if (msg.text) {
+    const text = document.createElement("div");
+    text.className = "comment-text";
+    text.textContent = msg.text;
+    content.appendChild(header);
+    content.appendChild(text);
+  } else {
+    content.appendChild(header);
   }
 
+  if (msg.image) {
+    const img = document.createElement("img");
+    img.className = "comment-image";
+    img.src = msg.image;
+    img.onclick = () => showImageModal(msg.image);
+    content.appendChild(img);
+  }
+
+  const actions = document.createElement("div");
+  actions.className = "comment-actions";
+
+  if (role === "mentor" || msg.user === userName) {
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "comment-delete";
+    deleteBtn.innerHTML = "🗑️";
+    deleteBtn.onclick = () => {
+      div.remove();
+      if (save) saveTodos();
+    };
+    actions.appendChild(deleteBtn);
+  }
+
+  if (actions.children.length > 0) {
+    content.appendChild(actions);
+  }
+
+  div.appendChild(avatar);
+  div.appendChild(content);
   list.appendChild(div);
+  
   if (save) saveTodos();
 }
 
@@ -1447,7 +1853,7 @@ function saveTodos() {
     const id = parseInt(div.id.replace("todo-", ""));
     const titleElement = div.querySelector("strong");
     const descElement = div.querySelector("span");
-    const userElement = div.querySelector(".todo-meta") || div.querySelector("div[style*='font-style: italic']");
+    const userElement = div.querySelector("div[style*='font-style: italic']");
     
     if (!titleElement || !descElement) return;
     
@@ -1483,18 +1889,25 @@ function saveTodos() {
     }
     
     const comments = [];
-    div.querySelectorAll(".comment-list > div").forEach(c => {
-      const strong = c.querySelector("strong");
-      const span = c.querySelector("span");
-      if (strong && span) {
-        const username = strong.textContent.replace(":", "").trim();
-        const text = span.textContent.trim();
+    div.querySelectorAll(".comment-item").forEach(c => {
+      const author = c.querySelector(".comment-author");
+      const text = c.querySelector(".comment-text");
+      const image = c.querySelector(".comment-image");
+      const time = c.querySelector(".comment-time");
+      
+      if (author) {
+        const username = author.textContent.trim();
+        const commentText = text ? text.textContent.trim() : "";
+        const commentImage = image ? image.src : null;
+        const timestamp = time ? new Date(time.textContent).getTime() : Date.now();
+        
         comments.push({
           type: "comment",
           todoId: id,
           user: username,
-          text,
-          timestamp: Date.now()
+          text: commentText,
+          image: commentImage,
+          timestamp: timestamp
         });
       }
     });
@@ -1756,6 +2169,7 @@ function setupKeyboardShortcuts() {
           e.preventDefault();
           clearSelection();
           closeShortcuts();
+          closeImageModal();
           break;
         case ' ':
           e.preventDefault();
