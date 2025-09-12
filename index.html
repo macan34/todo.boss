@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TodoPro - Enhanced Collaboration</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
+
+<style>
+/* === ROOT VARIABLES === */
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+  --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #1e293b;
+  --bg-secondary: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border-color: #475569;
+  --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: var(--primary-gradient);
+  min-height: 100vh;
+  line-height: 1.5;
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-height: 120px;
+  position: relative;
+}
+
+header h1 {
+  color: white;
+  font-size: 2.5rem;
+  font-weight: 300;
+  letter-spacing: -1px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  position: relative;
+}
+
+/* === THEME & SOUND TOGGLE === */
+.sound-toggle, .theme-toggle {
+  position: absolute;
+  top: 2rem;
+}
+
+.sound-toggle { left: 2rem; }
+.theme-toggle { right: 2rem; }
+
+.sound-toggle button, .theme-toggle button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.sound-toggle button:hover, .theme-toggle button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.sound-toggle button.muted {
+  opacity: 0.5;
+}
+
+.card {
+  background: var(--bg-primary);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: var(--shadow-medium);
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.45);
+}
+
+.card h2, .card h3 {
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+/* === DASHBOARD === */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stat-item {
+  text-align: center;
+  background: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: var(--shadow-light);
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #667eea;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* === NOTIFICATIONS === */
+.notification-container {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 400px;
+}
+
+.notification-toast {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  box-shadow: var(--shadow-medium);
+  animation: slideIn 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.notification-toast.success {
+  border-color: var(--success-color);
+  background: #f0fdf4;
+  color: #065f46;
+}
+
+.notification-toast.error {
+  border-color: var(--danger-color);
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.notification-toast.warning {
+  border-color: var(--warning-color);
+  background: #fffbeb;
+  color: #92400e;
+}
+
+/* === SEARCH & FILTER === */
+.search-filter-container {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.search-filter-container input,
+.search-filter-container select {
+  margin-bottom: 0;
+  min-width: 150px;
+  flex: 1;
+}
+
+/* === PRIORITY STYLING === */
+.priority-high {
+  border-left: 4px solid var(--danger-color);
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), transparent);
+}
+
+.priority-medium {
+  border-left: 4px solid var(--warning-color);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.1), transparent);
+}
+
+.priority-low {
+  border-left: 4px solid var(--success-color);
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), transparent);
+}
+
+.priority-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-right: 0.5rem;
+}
+
+.priority-badge.high {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.priority-badge.medium {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.priority-badge.low {
+  background: #f0fdf4;
+  color: #059669;
+  border: 1px solid #bbf7d0;
+}
+
+/* === DEADLINE STYLING === */
+.deadline-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  margin: 0.5rem 0;
+}
+
+.countdown-timer {
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+}
+
+.countdown-timer.urgent {
+  background: #fef2f2;
+  color: #dc2626;
+  animation: pulse 2s infinite;
+}
+
+.countdown-timer.warning {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.countdown-timer.normal {
+  background: #f0fdf4;
+  color: #059669;
+}
+
+.overdue {
+  background: #fef2f2 !important;
+  border-color: var(--danger-color) !important;
+  animation: flash 2s infinite;
+}
+
+/* === TODO ITEMS === */
+.todo-item {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-light);
+  border: 1px solid var(--border-color);
+  position: relative;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.todo-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-medium);
+}
+
+.todo-item.selected {
+  border-color: #667eea;
+  background: #f0f4ff;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.todo-item.completed {
+  background: #f0f9ff;
+  border-color: var(--success-color);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.todo-item strong {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* === BULK OPERATIONS === */
+.bulk-controls {
+  display: none;
+  background: #fef3c7;
+  border: 1px solid var(--warning-color);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  align-items: center;
+  gap: 1rem;
+  animation: slideIn 0.3s ease;
+}
+
+.bulk-controls.show {
+  display: flex;
+}
+
+.bulk-counter {
+  font-weight: 600;
+  color: #92400e;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* === KEYBOARD SHORTCUTS === */
+.shortcuts-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.shortcuts-content {
+  background: var(--bg-primary);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-medium);
+}
+
+.shortcuts-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.shortcut-key {
+  background: var(--bg-secondary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* === INPUT STYLES === */
+input[type="text"], input[type="file"], input[type="datetime-local"], select, textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+input[type="text"]:focus, input[type="datetime-local"]:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+button {
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+.status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status.online {
+  background: var(--success-color);
+  color: white;
+}
+
+.status.offline {
+  background: var(--danger-color);
+  color: white;
+}
+
+.hidden { 
+  display: none; 
+}
+
+.auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+@media (min-width: 480px) {
+  .auth-buttons {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .auth-buttons button {
+    flex: 1;
+  }
+  
+  .auth-buttons input {
+    flex: 2;
+    margin: 0 0.5rem;
+  }
+}
+
+.add-todo-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.add-todo-form input, .add-todo-form select, .add-todo-form textarea {
+  margin-bottom: 0;
+}
+
+.add-todo-form .full-width {
+  grid-column: 1 / -1;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* === ANIMATIONS === */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes flash {
+  0%, 100% { background-color: #fef2f2; }
+  50% { background-color: #fee2e2; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+  
+  .card {
+    padding: 1rem;
+  }
+  
+  header h1 {
+    font-size: 2rem;
+  }
+  
+  .dashboard-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .search-filter-container {
+    flex-direction: column;
+  }
+  
+  .add-todo-form {
+    grid-template-columns: 1fr;
+  }
+  
+  .sound-toggle, .theme-toggle {
+    top: 1rem;
+  }
+  
+  .sound-toggle { left: 1rem; }
+  .theme-toggle { right: 1rem; }
+}
+</style>
+
+</head>
+
+<body>
+  <header>
+    <h1>📝 TodoPro Enhanced</h1>
+    <div class="sound-toggle">
+      <button id="soundToggle" onclick="toggleSound()">🔊</button>
+    </div>
+    <div class="theme-toggle">
+      <button id="themeToggle" onclick="toggleTheme()">🌙</button>
+    </div>
+  </header>
+
+  <div class="notification-container" id="notificationContainer"></div>
+
+  <!-- Keyboard Shortcuts Modal -->
+  <div class="shortcuts-modal" id="shortcutsModal">
+    <div class="shortcuts-content">
+      <h3>⌨️ Keyboard Shortcuts</h3>
+      <div class="shortcuts-grid">
+        <div class="shortcut-key">Ctrl + N</div><div>Add new task (mentor only)</div>
+        <div class="shortcut-key">Ctrl + F</div><div>Focus search box</div>
+        <div class="shortcut-key">Ctrl + A</div><div>Select all tasks</div>
+        <div class="shortcut-key">Ctrl + Shift + A</div><div>Clear selection</div>
+        <div class="shortcut-key">Delete</div><div>Delete selected tasks</div>
+        <div class="shortcut-key">Enter</div><div>Complete selected tasks</div>
+        <div class="shortcut-key">ESC</div><div>Clear selection & close modals</div>
+        <div class="shortcut-key">?</div><div>Show/hide shortcuts help</div>
+        <div class="shortcut-key">Ctrl + D</div><div>Toggle dark mode</div>
+        <div class="shortcut-key">Ctrl + Shift + E</div><div>Export data</div>
+        <div class="shortcut-key">Ctrl + 1/2/3</div><div>Filter by priority</div>
+        <div class="shortcut-key">Space</div><div>Toggle task details</div>
+      </div>
+      <button onclick="closeShortcuts()" style="margin-top: 1rem; width: 100%;">Close</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="authSection" class="card">
+      <h2>🚀 Mari Berkolaborasi</h2>
+      <input type="text" id="userName" placeholder="Masukkan nama Anda">
+      <div class="auth-buttons">
+        <button onclick="createRoom()">🎯 Buat Room (Mentor)</button>
+        <input type="text" id="roomIdInput" placeholder="Room ID untuk bergabung">
+        <button onclick="joinRoom()">🤝 Gabung Room (Member)</button>
+      </div>
+    </div>
+
+    <div id="app" class="hidden">
+      <!-- Dashboard Analytics -->
+      <div class="card">
+        <h3>📈 Dashboard Analytics</h3>
+        <div class="dashboard-stats">
+          <div class="stat-item">
+            <div class="stat-number" id="totalTasks">0</div>
+            <div class="stat-label">Total Tasks</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="completedTasks">0</div>
+            <div class="stat-label">Completed</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="completionRate">0%</div>
+            <div class="stat-label">Completion Rate</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="overdueTasks">0</div>
+            <div class="stat-label">Overdue</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 id="roomTitle">🏠 Room</h2>
+        <p id="userRole" style="color: #667eea; font-weight: 500;"></p>
+        <p style="margin-top: 0.5rem;">Status: <span id="status" class="status offline">Offline</span></p>
+      </div>
+
+      <!-- Search & Filter -->
+      <div class="card">
+        <div class="search-filter-container">
+          <input type="text" id="searchInput" placeholder="🔍 Search tasks..." onkeyup="filterTasks()">
+          <select id="priorityFilter" onchange="filterTasks()">
+            <option value="all">All Priorities</option>
+            <option value="high">High Priority</option>
+            <option value="medium">Medium Priority</option>
+            <option value="low">Low Priority</option>
+          </select>
+          <select id="statusFilter" onchange="filterTasks()">
+            <option value="all">All Status</option>
+            <option value="completed">Completed</option>
+            <option value="overdue">Overdue</option>
+            <option value="assigned-to-me">Assigned to Me</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Bulk Operations -->
+      <div class="bulk-controls" id="bulkControls">
+        <span class="bulk-counter" id="bulkCounter">0 selected</span>
+        <div class="bulk-actions">
+          <button class="bulk-btn" onclick="bulkComplete()" style="background: var(--success-color);">✅ Complete</button>
+          <button class="bulk-btn" onclick="bulkDelete()" style="background: var(--danger-color);">🗑️ Delete</button>
+          <button class="bulk-btn" onclick="bulkExport()" style="background: #6b7280;">📤 Export</button>
+        </div>
+      </div>
+
+      <div id="todoSection" class="card">
+        <h3>📋 Daftar Tugas</h3>
+        
+        <div id="addTodoForm" class="add-todo-form hidden">
+          <input type="text" id="todoTitle" placeholder="Judul tugas...">
+          <textarea id="todoDesc" placeholder="Deskripsi tugas..." rows="2"></textarea>
+          
+          <select id="todoPriority">
+            <option value="low">🟢 Low Priority</option>
+            <option value="medium" selected>🟡 Medium Priority</option>
+            <option value="high">🔴 High Priority</option>
+          </select>
+          
+          <input type="datetime-local" id="todoDeadline">
+          
+          <button onclick="addTodo()" class="full-width">➕ Tambah Tugas</button>
+        </div>
+        
+        <div id="memberInfo" class="hidden" style="background: #f0f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #bae6fd;">
+          <p style="color: #0369a1; margin: 0; font-size: 0.9rem;">
+            💡 <strong>Member:</strong> Tugas akan selesai ketika SEMUA member sudah check. Check tugas Anda untuk berkontribusi!
+          </p>
+        </div>
+        
+        <div id="todoList">
+          <div class="empty-state">
+            <p>Belum ada tugas</p>
+            <small>Mentor akan menambahkan tugas untuk Anda!</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export/Import -->
+      <div class="card">
+        <h3>💾 Data Management</h3>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button onclick="exportData('json')">📄 Export JSON</button>
+          <button onclick="exportData('csv')">📊 Export CSV</button>
+          <input type="file" id="importFile" accept=".json" onchange="importData()" style="display: none;">
+          <button onclick="document.getElementById('importFile').click()">📥 Import Data</button>
+        </div>
+      </div>
+
+      <button onclick="logout()" style="background: linear-gradient(135deg, var(--danger-color) 0%, #dc2626 100%); width: 100%; margin-top: 1rem;">🚪 Keluar Room</button>
+    </div>
+  </div>
+
+<script>
+// Global variables
+let peer, conn, connections = [];
+let userName = "", roomId = "", role = "";
+let roomMembers = new Map();
+let selectedTasks = new Set();
+let soundEnabled = true;
+
+// Initialize on page load
+window.addEventListener("load", () => {
+  const savedSession = localStorage.getItem("session");
+  if (savedSession) {
+    const s = JSON.parse(savedSession);
+    userName = s.userName;
+    roomId = s.roomId;
+    role = s.role;
+    if (role === "mentor") autoCreateRoom();
+    else if (role === "member") autoJoinRoom();
+  }
+  if (role) loadLocalTodos();
+  
+  // Initialize theme
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme) {
+    document.documentElement.setAttribute("data-theme", savedTheme);
+    updateThemeToggle();
+  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.setAttribute("data-theme", "dark");
+    updateThemeToggle();
+  }
+  
+  // Initialize sound
+  soundEnabled = localStorage.getItem("soundEnabled") !== "false";
+  updateSoundToggle();
+  
+  // Setup notification permission
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission();
+  }
+  
+  // Setup keyboard shortcuts
+  setupKeyboardShortcuts();
+});
+
+// Session management
+function saveSession() { 
+  localStorage.setItem("session", JSON.stringify({ userName, roomId, role })); 
+}
+
+function clearSession() { 
+  localStorage.removeItem("session"); 
+}
+
+// Theme system
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute("data-theme");
+  const newTheme = currentTheme === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", newTheme);
+  localStorage.setItem("theme", newTheme);
+  updateThemeToggle();
+  showNotification("Theme changed to " + newTheme + " mode", "success");
+}
+
+function updateThemeToggle() {
+  const currentTheme = document.documentElement.getAttribute("data-theme");
+  const toggle = document.getElementById("themeToggle");
+  if (toggle) {
+    toggle.textContent = currentTheme === "dark" ? "☀️" : "🌙";
+  }
+}
+
+// Sound system
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  localStorage.setItem("soundEnabled", soundEnabled);
+  updateSoundToggle();
+  
+  if (soundEnabled) {
+    playSound();
+    showNotification("Sound enabled", "success");
+  } else {
+    showNotification("Sound disabled", "warning");
+  }
+}
+
+function updateSoundToggle() {
+  const toggle = document.getElementById("soundToggle");
+  if (toggle) {
+    toggle.textContent = soundEnabled ? "🔊" : "🔇";
+    toggle.classList.toggle("muted", !soundEnabled);
+  }
+}
+
+function playSound(type = "notification") {
+  if (!soundEnabled) return;
+  
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = type === "warning" ? 800 : 600;
+    oscillator.type = "sine";
+    
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+  } catch (e) {
+    console.log("Audio not supported");
+  }
+}
+
+// Notification system
+function showNotification(message, type = "success") {
+  const container = document.getElementById("notificationContainer");
+  const notification = document.createElement("div");
+  notification.className = `notification-toast ${type}`;
+  
+  const icon = type === "success" ? "✅" : type === "error" ? "❌" : "⚠️";
+  notification.innerHTML = `
+    <span class="notification-icon">${icon}</span>
+    <span>${message}</span>
+    <button class="notification-close" onclick="this.parentElement.remove()">✕</button>
+  `;
+  
+  container.appendChild(notification);
+  
+  // Auto remove after 3 seconds
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.remove();
+    }
+  }, 3000);
+  
+  // Browser notification for important messages
+  if (type === "error" || type === "warning") {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("TodoPro", { body: message });
+    }
+  }
+}
+
+// Room management
+function createRoom() {
+  userName = document.getElementById("userName").value.trim();
+  if (!userName) {
+    showNotification("Isi nama Anda!", "error");
+    return;
+  }
+  role = "mentor";
+  roomId = "room-" + Math.floor(Math.random() * 10000);
+  saveSession();
+  autoCreateRoom();
+}
+
+function autoCreateRoom() {
+  peer = new Peer(roomId);
+  peer.on("open", id => {
+    initApp("🏠 Room ID: " + id, "🎯 Mentor: " + userName);
+    document.getElementById("status").className = "status online";
+    
+    roomMembers.set(userName, { status: "online", role: "mentor" });
+    playSound();
+    showNotification("Room created successfully!", "success");
+
+    let savedTodos = localStorage.getItem("todos");
+    if (savedTodos) {
+      if (confirm("Data lama ditemukan. Muat data lama?")) {
+        JSON.parse(savedTodos).forEach(todo => renderTodo(todo));
+        updateEmptyState();
+        updateDashboard();
+      } else {
+        localStorage.removeItem("todos");
+      }
+    }
+
+    peer.on("connection", c => {
+      connections.push(c);
+      c.on("data", data => {
+        if (data.type === "requestData") {
+          c.send({ type: "allTodos", todos: getAllTodos() });
+          c.send({ type: "membersList", members: Array.from(roomMembers.entries()) });
+        } else if (data.type === "memberJoined") {
+          roomMembers.set(data.userName, { status: "online", role: "member" });
+          broadcast({ type: "memberJoined", userName: data.userName });
+          playSound();
+          showNotification(`${data.userName} joined the room`, "success");
+        } else {
+          handleData(data);
+        }
+      });
+      
+      c.on("close", () => {
+        connections = connections.filter(conn => conn !== c);
+      });
+    });
+  });
+}
+
+function joinRoom() {
+  userName = document.getElementById("userName").value.trim();
+  roomId = document.getElementById("roomIdInput").value.trim();
+  if (!userName || !roomId) {
+    showNotification("Isi nama dan Room ID!", "error");
+    return;
+  }
+  role = "member";
+  saveSession();
+  autoJoinRoom();
+}
+
+function autoJoinRoom() {
+  peer = new Peer();
+  peer.on("open", () => {
+    conn = peer.connect(roomId);
+    conn.on("open", () => {
+      initApp("🏠 Room ID: " + roomId, "🤝 Member: " + userName);
+      document.getElementById("status").className = "status online";
+      conn.send({ type: "requestData" });
+      conn.send({ type: "memberJoined", userName: userName });
+      conn.on("data", handleData);
+      playSound();
+      showNotification("Connected to room successfully!", "success");
+    });
+    
+    conn.on("error", () => {
+      showNotification("Failed to connect to room. Check Room ID.", "error");
+    });
+  });
+}
+
+function initApp(title, info) {
+  document.getElementById("authSection").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("roomTitle").innerText = title;
+  document.getElementById("userRole").innerText = info;
+  
+  document.getElementById("addTodoForm").classList.add("hidden");
+  document.getElementById("memberInfo").classList.add("hidden");
+  
+  if (role === "mentor") {
+    document.getElementById("addTodoForm").classList.remove("hidden");
+  } else if (role === "member") {
+    document.getElementById("memberInfo").classList.remove("hidden");
+  }
+  
+  updateEmptyState();
+  updateDashboard();
+}
+
+// Task management
+function addTodo() {
+  if (role !== "mentor") {
+    showNotification("Hanya mentor yang dapat menambah tugas!", "error");
+    return;
+  }
+  
+  const title = document.getElementById("todoTitle").value.trim();
+  const desc = document.getElementById("todoDesc").value.trim();
+  const priority = document.getElementById("todoPriority").value;
+  const deadline = document.getElementById("todoDeadline").value;
+  
+  if (!title) {
+    showNotification("Judul tidak boleh kosong", "error");
+    return;
+  }
+  
+  const todo = { 
+    type: "todo", 
+    id: Date.now(), 
+    title, 
+    desc, 
+    priority,
+    deadline: deadline ? new Date(deadline).getTime() : null,
+    user: userName, 
+    comments: [],
+    completed: false,
+    completedBy: [],
+    completedAt: null,
+    memberChecks: {},
+    createdAt: Date.now()
+  };
+  
+  renderTodo(todo);
+  saveTodos();
+  broadcast(todo);
+  
+  // Clear form
+  document.getElementById("todoTitle").value = "";
+  document.getElementById("todoDesc").value = "";
+  document.getElementById("todoDeadline").value = "";
+  
+  updateEmptyState();
+  updateDashboard();
+  playSound();
+  showNotification("Task added successfully!", "success");
+}
+
+function renderTodo(todo) {
+  if (document.getElementById("todo-" + todo.id)) return;
+  
+  const div = document.createElement("div");
+  div.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+  div.id = "todo-" + todo.id;
+  
+  // Add priority class
+  if (todo.priority) {
+    div.classList.add(`priority-${todo.priority}`);
+  }
+  
+  // Check if overdue
+  const now = Date.now();
+  const isOverdue = todo.deadline && todo.deadline < now && !todo.completed;
+  if (isOverdue) {
+    div.classList.add("overdue");
+  }
+  
+  // Calculate progress
+  const memberChecks = todo.memberChecks || {};
+  const totalMembers = Math.max(roomMembers.size, 1);
+  const checkedCount = Object.keys(memberChecks).filter(member => memberChecks[member]).length;
+  const currentUserChecked = memberChecks[userName] || false;
+  
+  // Build deadline info
+  let deadlineInfo = '';
+  if (todo.deadline) {
+    const timeLeft = todo.deadline - now;
+    const deadlineDate = new Date(todo.deadline).toLocaleString('id-ID');
+    let countdownClass = 'normal';
+    let countdownText = '';
+    
+    if (timeLeft < 0) {
+      countdownText = 'OVERDUE';
+      countdownClass = 'urgent';
+    } else if (timeLeft < 3600000) { // 1 hour
+      countdownText = 'Due in ' + Math.ceil(timeLeft / 60000) + ' minutes';
+      countdownClass = 'urgent';
+    } else if (timeLeft < 86400000) { // 24 hours
+      countdownText = 'Due in ' + Math.ceil(timeLeft / 3600000) + ' hours';
+      countdownClass = 'warning';
+    } else {
+      countdownText = 'Due in ' + Math.ceil(timeLeft / 86400000) + ' days';
+    }
+    
+    deadlineInfo = `
+      <div class="deadline-info">
+        <span>⏰ ${deadlineDate}</span>
+        <span class="countdown-timer ${countdownClass}">${countdownText}</span>
+      </div>
+    `;
+  }
+  
+  // Build priority badge
+  const priorityBadge = todo.priority ? 
+    `<span class="priority-badge ${todo.priority}">${todo.priority.toUpperCase()}</span>` : '';
+  
+  // Build completion status
+  let completionStatus = '';
+  if (todo.completed) {
+    completionStatus = `
+      <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.875rem;">
+        <div style="color: #059669; font-weight: 600; margin-bottom: 0.5rem;">✅ Task Completed!</div>
+        <div style="color: #6b7280; font-size: 0.8rem; font-style: italic;">Completed on ${new Date(todo.completedAt).toLocaleString('id-ID')}</div>
+      </div>
+    `;
+  } else if (checkedCount > 0) {
+    const progressPercentage = (checkedCount / totalMembers) * 100;
+    const checkedMembers = Object.keys(memberChecks).filter(m => memberChecks[m]);
+    const uncheckedMembers = Array.from(roomMembers.keys()).filter(m => !memberChecks[m]);
+    
+    completionStatus = `
+      <div style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.875rem;">
+        <div style="color: #92400e; font-weight: 600; margin-bottom: 0.5rem;">Progress: ${checkedCount}/${totalMembers} members</div>
+        <div style="background: #f3f4f6; border-radius: 4px; height: 8px; margin: 0.5rem 0;">
+          <div style="background: #f59e0b; height: 100%; border-radius: 4px; width: ${progressPercentage}%; transition: width 0.3s ease;"></div>
+        </div>
+        <div style="font-size: 0.75rem; color: #374151; margin-top: 0.5rem;">
+          ${checkedMembers.length > 0 ? `<span style="color: #059669; font-weight: 500;">✅ ${checkedMembers.join(', ')}</span>` : ''}
+          ${uncheckedMembers.length > 0 ? `<span style="color: #6b7280;">⏳ ${uncheckedMembers.join(', ')}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  
+  div.innerHTML = `
+    <strong>${priorityBadge}${escapeHtml(todo.title)}</strong>
+    <span style="color: var(--text-secondary); font-size: 0.95rem; display: block; margin-bottom: 0.75rem;">${escapeHtml(todo.desc)}</span>
+    <div style="color: var(--text-secondary); font-size: 0.8rem; font-style: italic; margin-bottom: 1rem;">👤 ${escapeHtml(todo.user)}</div>
+    ${deadlineInfo}
+    ${completionStatus}
+    <div style="display: flex; gap: 0.5rem; margin-top: 1rem; align-items: center; flex-wrap: wrap;">
+      <button onclick="toggleCompletion(${todo.id})" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-color); padding: 0.5rem 1rem; cursor: pointer; border-radius: 8px; transition: all 0.2s ease; font-size: 0.875rem; box-shadow: none; ${currentUserChecked ? 'background: #fef3c7; border-color: var(--warning-color); color: #92400e;' : ''}">
+        <input type="checkbox" ${currentUserChecked ? 'checked' : ''} onchange="event.preventDefault()" style="width: 16px; height: 16px; margin: 0; accent-color: var(--success-color); cursor: pointer;">
+        <span>${currentUserChecked ? '✅ Sudah Check' : 'Check Tugas'}</span>
+      </button>
+      <button onclick="toggleComment(${todo.id})" style="background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-color); padding: 0.5rem 1rem; font-size: 0.875rem; box-shadow: none;">💬 Komentar</button>
+    </div>
+    ${role === "mentor" ? `<button onclick="deleteTodo(${todo.id})" title="Hapus tugas" style="position: absolute; top: 1rem; right: 1rem; background: var(--danger-color); color: white; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);">🗑️</button>` : ""}
+    <div class="comment-box hidden" id="commentBox-${todo.id}" style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color);">
+      <h4 style="color: var(--text-primary); margin-bottom: 1rem; font-size: 1rem;">💬 Komentar</h4>
+      <div class="comment-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 1rem;"></div>
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+          <input type="text" id="commentInput-${todo.id}" placeholder="Tulis komentar..." onkeypress="if(event.key==='Enter') sendComment(${todo.id})" style="flex: 1; margin-bottom: 0;">
+          <button onclick="sendComment(${todo.id})" style="padding: 0.75rem 1rem; margin-bottom: 0;">Kirim</button>
+        </div>
+      </div>
+    </div>`;
+  
+  // Add click handler for task selection
+  div.addEventListener('click', (e) => {
+    if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
+      if (e.ctrlKey || e.metaKey) {
+        toggleTaskSelection(todo.id);
+      }
+    }
+  });
+  
+  document.getElementById("todoList").appendChild(div);
+  updateEmptyState();
+
+  // Render existing comments
+  if (todo.comments) {
+    todo.comments.forEach(c => appendComment(c, false));
+  }
+}
+
+function toggleCompletion(todoId) {
+  const todoDiv = document.getElementById("todo-" + todoId);
+  const checkbox = todoDiv.querySelector('input[type="checkbox"]');
+  
+  const isChecked = !checkbox.checked;
+  
+  const checkData = {
+    type: "memberCheck",
+    todoId: todoId,
+    userName: userName,
+    checked: isChecked
+  };
+  
+  broadcast(checkData);
+  handleMemberCheck(checkData);
+  saveTodos();
+  updateDashboard();
+}
+
+function handleMemberCheck(data) {
+  const todos = getAllTodos();
+  const todoIndex = todos.findIndex(t => t.id === data.todoId);
+  if (todoIndex === -1) return;
+  
+  const todo = todos[todoIndex];
+  if (!todo.memberChecks) todo.memberChecks = {};
+  todo.memberChecks[data.userName] = data.checked;
+  
+  // Check if all members have completed
+  const checkedMembers = Object.keys(todo.memberChecks).filter(member => todo.memberChecks[member]);
+  const totalMembers = Math.max(roomMembers.size, 1);
+  
+  const wasCompleted = todo.completed;
+  const nowCompleted = checkedMembers.length >= totalMembers;
+  
+  if (nowCompleted && !wasCompleted) {
+    todo.completed = true;
+    todo.completedBy = checkedMembers;
+    todo.completedAt = Date.now();
+    playSound();
+    showNotification(`Task "${todo.title}" completed by all members!`, "success");
+  } else if (!nowCompleted && wasCompleted) {
+    todo.completed = false;
+    todo.completedBy = [];
+    todo.completedAt = null;
+  }
+  
+  localStorage.setItem("todos", JSON.stringify(todos));
+  refreshTodoDisplay(data.todoId);
+}
+
+function refreshTodoDisplay(todoId) {
+  const todoDiv = document.getElementById("todo-" + todoId);
+  if (!todoDiv) return;
+  
+  const todos = getAllTodos();
+  const todo = todos.find(t => t.id === todoId);
+  if (!todo) return;
+  
+  todoDiv.remove();
+  renderTodo(todo);
+}
+
+function toggleComment(todoId) {
+  document.getElementById("commentBox-" + todoId).classList.toggle("hidden");
+}
+
+function sendComment(todoId) {
+  const text = document.getElementById("commentInput-" + todoId).value.trim();
+  if (!text) return;
+
+  const msg = { type: "comment", todoId, text, user: userName, timestamp: Date.now() };
+  appendComment(msg);
+  saveTodos();
+  broadcast(msg);
+  document.getElementById("commentInput-" + todoId).value = "";
+}
+
+function appendComment(msg, save = true) {
+  const list = document.querySelector(`#todo-${msg.todoId} .comment-list`);
+  if (!list) return;
+
+  const div = document.createElement("div");
+  div.style.cssText = "display: flex; align-items: flex-start; justify-content: space-between; background: var(--bg-primary); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; box-shadow: var(--shadow-light); border: 1px solid var(--border-color);";
+
+  const left = document.createElement("div");
+  left.style.cssText = "flex: 1; word-break: break-word;";
+
+  const strongEl = document.createElement("strong");
+  strongEl.style.cssText = "color: #667eea; font-weight: 600; font-size: 0.875rem;";
+  strongEl.textContent = msg.user + ":";
+
+  const span = document.createElement("span");
+  span.style.cssText = "color: var(--text-primary); font-size: 0.875rem; margin-left: 0.5rem;";
+  span.textContent = msg.text || "";
+
+  left.appendChild(strongEl);
+  left.appendChild(span);
+  div.appendChild(left);
+
+  if (role === "mentor") {
+    const del = document.createElement("button");
+    del.style.cssText = "background: var(--danger-color); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; margin-left: 0.5rem;";
+    del.innerHTML = "✖";
+    del.onclick = () => {
+      div.remove();
+      saveTodos();
+    };
+    div.appendChild(del);
+  }
+
+  list.appendChild(div);
+  if (save) saveTodos();
+}
+
+function handleData(data) {
+  if (data.type === "todo") {
+    renderTodo(data);
+    saveTodos();
+    updateDashboard();
+  }
+  if (data.type === "comment") {
+    appendComment(data);
+    saveTodos();
+  }
+  if (data.type === "allTodos") {
+    data.todos.forEach(todo => renderTodo(todo));
+    saveTodos();
+    updateDashboard();
+  }
+  if (data.type === "deleteTodo") {
+    document.getElementById("todo-" + data.todoId)?.remove();
+    saveTodos();
+    updateEmptyState();
+    updateDashboard();
+  }
+  if (data.type === "memberJoined") {
+    roomMembers.set(data.userName, { status: "online", role: "member" });
+    refreshAllTodoDisplays();
+  }
+  if (data.type === "membersList") {
+    data.members.forEach(([name, info]) => roomMembers.set(name, info));
+    refreshAllTodoDisplays();
+  }
+  if (data.type === "memberCheck") {
+    handleMemberCheck(data);
+  }
+}
+
+function refreshAllTodoDisplays() {
+  const todos = getAllTodos();
+  document.getElementById("todoList").innerHTML = '';
+  todos.forEach(todo => renderTodo(todo));
+  updateEmptyState();
+  updateDashboard();
+}
+
+// Task selection and bulk operations
+function toggleTaskSelection(todoId) {
+  const todoDiv = document.getElementById("todo-" + todoId);
+  if (selectedTasks.has(todoId)) {
+    selectedTasks.delete(todoId);
+    todoDiv.classList.remove("selected");
+  } else {
+    selectedTasks.add(todoId);
+    todoDiv.classList.add("selected");
+  }
+  updateBulkControls();
+}
+
+function updateBulkControls() {
+  const bulkControls = document.getElementById("bulkControls");
+  const counter = document.getElementById("bulkCounter");
+  
+  if (selectedTasks.size > 0) {
+    bulkControls.classList.add("show");
+    counter.textContent = `${selectedTasks.size} selected`;
+  } else {
+    bulkControls.classList.remove("show");
+  }
+}
+
+function bulkComplete() {
+  if (selectedTasks.size === 0) return;
+  
+  selectedTasks.forEach(todoId => {
+    const checkData = {
+      type: "memberCheck",
+      todoId: todoId,
+      userName: userName,
+      checked: true
+    };
+    broadcast(checkData);
+    handleMemberCheck(checkData);
+  });
+  
+  saveTodos();
+  updateDashboard();
+  clearSelection();
+  showNotification(`${selectedTasks.size} tasks marked as complete`, "success");
+}
+
+function bulkDelete() {
+  if (selectedTasks.size === 0) return;
+  if (role !== "mentor") {
+    showNotification("Only mentors can delete tasks", "error");
+    return;
+  }
+  
+  if (!confirm(`Delete ${selectedTasks.size} selected tasks?`)) return;
+  
+  selectedTasks.forEach(todoId => {
+    document.getElementById("todo-" + todoId)?.remove();
+    broadcast({ type: "deleteTodo", todoId });
+  });
+  
+  saveTodos();
+  updateEmptyState();
+  updateDashboard();
+  clearSelection();
+  showNotification(`${selectedTasks.size} tasks deleted`, "success");
+}
+
+function bulkExport() {
+  if (selectedTasks.size === 0) return;
+  
+  const todos = getAllTodos().filter(todo => selectedTasks.has(todo.id));
+  const dataStr = JSON.stringify(todos, null, 2);
+  const dataBlob = new Blob([dataStr], {type: 'application/json'});
+  
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(dataBlob);
+  link.download = `selected-tasks-${new Date().toISOString().split('T')[0]}.json`;
+  link.click();
+  
+  showNotification(`${selectedTasks.size} tasks exported`, "success");
+}
+
+function clearSelection() {
+  selectedTasks.forEach(todoId => {
+    const todoDiv = document.getElementById("todo-" + todoId);
+    if (todoDiv) todoDiv.classList.remove("selected");
+  });
+  selectedTasks.clear();
+  updateBulkControls();
+}
+
+// Search and filter
+function filterTasks() {
+  const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+  const priorityFilter = document.getElementById("priorityFilter").value;
+  const statusFilter = document.getElementById("statusFilter").value;
+  
+  const todos = document.querySelectorAll(".todo-item");
+  
+  todos.forEach(todoDiv => {
+    const title = todoDiv.querySelector("strong").textContent.toLowerCase();
+    const desc = todoDiv.querySelector("span").textContent.toLowerCase();
+    const priority = todoDiv.classList.contains("priority-high") ? "high" : 
+                    todoDiv.classList.contains("priority-medium") ? "medium" : 
+                    todoDiv.classList.contains("priority-low") ? "low" : "all";
+    
+    const matchesSearch = title.includes(searchTerm) || desc.includes(searchTerm);
+    const matchesPriority = priorityFilter === "all" || priority === priorityFilter;
+    
+    let matchesStatus = true;
+    if (statusFilter === "completed") {
+      matchesStatus = todoDiv.classList.contains("completed");
+    } else if (statusFilter === "overdue") {
+      matchesStatus = todoDiv.classList.contains("overdue");
+    } else if (statusFilter === "assigned-to-me") {
+      matchesStatus = todoDiv.classList.contains("assigned-to-me");
+    }
+    
+    if (matchesSearch && matchesPriority && matchesStatus) {
+      todoDiv.style.display = "block";
+    } else {
+      todoDiv.style.display = "none";
+    }
+  });
+}
+
+// Data management
+function getAllTodos() {
+  return JSON.parse(localStorage.getItem("todos") || "[]");
+}
+
+function saveTodos() {
+  const todos = [];
+  document.querySelectorAll(".todo-item").forEach(div => {
+    const id = parseInt(div.id.replace("todo-", ""));
+    const titleElement = div.querySelector("strong");
+    const descElement = div.querySelector("span");
+    const userElement = div.querySelector(".todo-meta") || div.querySelector("div[style*='font-style: italic']");
+    
+    if (!titleElement || !descElement) return;
+    
+    const title = titleElement.textContent.replace(/^(HIGH|MEDIUM|LOW)\s*/, "");
+    const desc = descElement.textContent;
+    const user = userElement ? userElement.textContent.replace("👤 ", "") : userName;
+    const completed = div.classList.contains('completed');
+    
+    // Get priority from class
+    const priority = div.classList.contains("priority-high") ? "high" : 
+                    div.classList.contains("priority-medium") ? "medium" : 
+                    div.classList.contains("priority-low") ? "low" : "medium";
+    
+    // Get deadline from deadline-info
+    const deadlineElement = div.querySelector(".deadline-info");
+    let deadline = null;
+    if (deadlineElement) {
+      const deadlineText = deadlineElement.querySelector("span").textContent.replace("⏰ ", "");
+      deadline = new Date(deadlineText).getTime();
+    }
+    
+    // Get existing data from localStorage
+    const existingTodos = JSON.parse(localStorage.getItem("todos") || "[]");
+    const existingTodo = existingTodos.find(t => t.id === id);
+    
+    let completedBy = [];
+    let completedAt = null;
+    let memberChecks = existingTodo ? existingTodo.memberChecks || {} : {};
+    
+    if (completed && existingTodo) {
+      completedBy = existingTodo.completedBy || [];
+      completedAt = existingTodo.completedAt || Date.now();
+    }
+    
+    const comments = [];
+    div.querySelectorAll(".comment-list > div").forEach(c => {
+      const strong = c.querySelector("strong");
+      const span = c.querySelector("span");
+      if (strong && span) {
+        const username = strong.textContent.replace(":", "").trim();
+        const text = span.textContent.trim();
+        comments.push({
+          type: "comment",
+          todoId: id,
+          user: username,
+          text,
+          timestamp: Date.now()
+        });
+      }
+    });
+    
+    todos.push({ 
+      type: "todo", 
+      id, 
+      title, 
+      desc, 
+      priority,
+      deadline,
+      user, 
+      comments, 
+      completed,
+      completedBy,
+      completedAt,
+      memberChecks,
+      createdAt: existingTodo ? existingTodo.createdAt : Date.now()
+    });
+  });
+  localStorage.setItem("todos", JSON.stringify(todos));
+}
+
+function loadLocalTodos() {
+  const saved = localStorage.getItem("todos");
+  if (saved) {
+    JSON.parse(saved).forEach(todo => renderTodo(todo));
+  }
+  if (role) {
+    updateEmptyState();
+    updateDashboard();
+  }
+}
+
+function exportData(format) {
+  const todos = getAllTodos();
+  let dataStr, filename, mimeType;
+  
+  if (format === 'json') {
+    dataStr = JSON.stringify(todos, null, 2);
+    filename = `todopro-data-${new Date().toISOString().split('T')[0]}.json`;
+    mimeType = 'application/json';
+  } else if (format === 'csv') {
+    const headers = ['ID', 'Title', 'Description', 'Priority', 'Status', 'Created By', 'Created At', 'Deadline', 'Completed At'];
+    const csvData = [headers.join(',')];
+    
+    todos.forEach(todo => {
+      const row = [
+        todo.id,
+        `"${todo.title}"`,
+        `"${todo.desc}"`,
+        todo.priority || 'medium',
+        todo.completed ? 'Completed' : 'Pending',
+        `"${todo.user}"`,
+        new Date(todo.createdAt).toISOString(),
+        todo.deadline ? new Date(todo.deadline).toISOString() : '',
+        todo.completedAt ? new Date(todo.completedAt).toISOString() : ''
+      ];
+      csvData.push(row.join(','));
+    });
+    
+    dataStr = csvData.join('\n');
+    filename = `todopro-data-${new Date().toISOString().split('T')[0]}.csv`;
+    mimeType = 'text/csv';
+  }
+  
+  const dataBlob = new Blob([dataStr], {type: mimeType});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(dataBlob);
+  link.download = filename;
+  link.click();
+  
+  showNotification(`Data exported as ${format.toUpperCase()}`, "success");
+}
+
+function importData() {
+  const fileInput = document.getElementById("importFile");
+  const file = fileInput.files[0];
+  
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const importedData = JSON.parse(e.target.result);
+      let importCount = 0;
+      
+      if (Array.isArray(importedData)) {
+        importedData.forEach(todo => {
+          if (todo.type === "todo" && !document.getElementById("todo-" + todo.id)) {
+            renderTodo(todo);
+            importCount++;
+          }
+        });
+        
+        saveTodos();
+        updateEmptyState();
+        updateDashboard();
+        showNotification(`${importCount} tasks imported successfully`, "success");
+      } else {
+        showNotification("Invalid data format", "error");
+      }
+    } catch (error) {
+      showNotification("Failed to import data. Invalid JSON format.", "error");
+    }
+  };
+  
+  reader.readAsText(file);
+  fileInput.value = "";
+}
+
+// Dashboard and analytics
+function updateDashboard() {
+  const todos = getAllTodos();
+  const totalTasks = todos.length;
+  const completedTasks = todos.filter(t => t.completed).length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  
+  const now = Date.now();
+  const overdueTasks = todos.filter(t => !t.completed && t.deadline && t.deadline < now).length;
+  
+  document.getElementById("totalTasks").textContent = totalTasks;
+  document.getElementById("completedTasks").textContent = completedTasks;
+  document.getElementById("completionRate").textContent = completionRate + "%";
+  document.getElementById("overdueTasks").textContent = overdueTasks;
+  
+  // Update completion rate color
+  const rateElement = document.getElementById("completionRate");
+  if (completionRate >= 80) {
+    rateElement.style.color = "#059669";
+  } else if (completionRate >= 50) {
+    rateElement.style.color = "#d97706";
+  } else {
+    rateElement.style.color = "#dc2626";
+  }
+}
+
+function deleteTodo(todoId) {
+  if (role !== "mentor") {
+    showNotification("Only mentors can delete tasks", "error");
+    return;
+  }
+  
+  if (!confirm("Yakin hapus tugas ini?")) return;
+  
+  document.getElementById("todo-" + todoId)?.remove();
+  saveTodos();
+  broadcast({ type: "deleteTodo", todoId });
+  updateEmptyState();
+  updateDashboard();
+  showNotification("Task deleted successfully", "success");
+}
+
+function updateEmptyState() {
+  const todoList = document.getElementById("todoList");
+  const todos = todoList.querySelectorAll(".todo-item");
+  const emptyState = todoList.querySelector(".empty-state");
+  
+  if (todos.length === 0) {
+    if (!emptyState) {
+      const emptyDiv = document.createElement("div");
+      emptyDiv.className = "empty-state";
+      if (role === "mentor") {
+        emptyDiv.innerHTML = `
+          <p>Belum ada tugas</p>
+          <small>Tambahkan tugas pertama untuk tim Anda!</small>
+        `;
+      } else {
+        emptyDiv.innerHTML = `
+          <p>Belum ada tugas</p>
+          <small>Mentor akan menambahkan tugas untuk tim!</small>
+        `;
+      }
+      todoList.appendChild(emptyDiv);
+    }
+  } else {
+    if (emptyState) {
+      emptyState.remove();
+    }
+  }
+}
+
+// Keyboard shortcuts
+function setupKeyboardShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    // Ignore if user is typing in input fields
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      return;
+    }
+    
+    // Ctrl/Cmd shortcuts
+    if (e.ctrlKey || e.metaKey) {
+      switch(e.key) {
+        case 'n':
+          e.preventDefault();
+          if (role === "mentor") {
+            document.getElementById("todoTitle").focus();
+          }
+          break;
+        case 'f':
+          e.preventDefault();
+          document.getElementById("searchInput").focus();
+          break;
+        case 'a':
+          e.preventDefault();
+          if (e.shiftKey) {
+            clearSelection();
+          } else {
+            selectAllTasks();
+          }
+          break;
+        case 'd':
+          e.preventDefault();
+          toggleTheme();
+          break;
+        case '1':
+          e.preventDefault();
+          document.getElementById("priorityFilter").value = "high";
+          filterTasks();
+          break;
+        case '2':
+          e.preventDefault();
+          document.getElementById("priorityFilter").value = "medium";
+          filterTasks();
+          break;
+        case '3':
+          e.preventDefault();
+          document.getElementById("priorityFilter").value = "low";
+          filterTasks();
+          break;
+        case 'e':
+          if (e.shiftKey) {
+            e.preventDefault();
+            exportData('json');
+          }
+          break;
+      }
+    } else {
+      // Single key shortcuts
+      switch(e.key) {
+        case '?':
+          e.preventDefault();
+          toggleShortcuts();
+          break;
+        case 'Delete':
+        case 'Backspace':
+          e.preventDefault();
+          if (selectedTasks.size > 0) {
+            bulkDelete();
+          }
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (selectedTasks.size > 0) {
+            bulkComplete();
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          clearSelection();
+          closeShortcuts();
+          break;
+        case ' ':
+          e.preventDefault();
+          // Toggle first selected task details
+          if (selectedTasks.size > 0) {
+            const firstSelected = Array.from(selectedTasks)[0];
+            toggleComment(firstSelected);
+          }
+          break;
+      }
+    }
+  });
+}
+
+function selectAllTasks() {
+  document.querySelectorAll(".todo-item").forEach(div => {
+    const todoId = parseInt(div.id.replace("todo-", ""));
+    selectedTasks.add(todoId);
+    div.classList.add("selected");
+  });
+  updateBulkControls();
+}
+
+function toggleShortcuts() {
+  const modal = document.getElementById("shortcutsModal");
+  modal.style.display = modal.style.display === "flex" ? "none" : "flex";
+}
+
+function closeShortcuts() {
+  document.getElementById("shortcutsModal").style.display = "none";
+}
+
+// Deadline notifications
+function checkDeadlines() {
+  if (role !== "member" && role !== "mentor") return;
+  
+  const todos = getAllTodos();
+  const now = Date.now();
+  const oneHour = 60 * 60 * 1000;
+  
+  todos.forEach(todo => {
+    if (!todo.completed && todo.deadline) {
+      const timeLeft = todo.deadline - now;
+      
+      // Notify 1 hour before deadline
+      if (timeLeft > 0 && timeLeft <= oneHour) {
+        const minutes = Math.ceil(timeLeft / (60 * 1000));
+        playSound("warning");
+        showNotification(`Task "${todo.title}" due in ${minutes} minutes!`, "warning");
+        
+        // Browser notification
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("TodoPro - Deadline Alert", {
+            body: `Task "${todo.title}" due in ${minutes} minutes!`,
+            icon: "/favicon.ico"
+          });
+        }
+      }
+      // Notify if overdue
+      else if (timeLeft < 0) {
+        const hoursOverdue = Math.ceil(Math.abs(timeLeft) / (60 * 60 * 1000));
+        if (hoursOverdue <= 24) { // Only notify for first 24 hours
+          playSound("warning");
+          showNotification(`Task "${todo.title}" is ${hoursOverdue} hours overdue!`, "error");
+        }
+      }
+    }
+  });
+}
+
+// Set up deadline checking every 10 minutes
+setInterval(checkDeadlines, 10 * 60 * 1000);
+
+function logout() {
+  clearSession();
+  localStorage.removeItem("todos");
+  if (peer) peer.destroy();
+  if (conn) conn.close();
+  connections.forEach(c => c.close());
+  connections = [];
+  roomMembers.clear();
+  selectedTasks.clear();
+  showNotification("Logged out successfully", "success");
+  setTimeout(() => location.reload(), 1000);
+}
+
+function broadcast(msg) {
+  connections.forEach(c => {
+    try {
+      c.send(msg);
+    } catch (e) {
+      console.log("Failed to send to connection:", e);
+    }
+  });
+  if (conn && conn.open) {
+    try {
+      conn.send(msg);
+    } catch (e) {
+      console.log("Failed to send to main connection:", e);
+    }
+  }
+}
+
+function escapeHtml(str) {
+  if (!str && str !== "") return "";
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Auto-save every 30 seconds
+setInterval(() => {
+  if (role && document.querySelectorAll(".todo-item").length > 0) {
+    saveTodos();
+  }
+}, 30000);
+
+// Update countdown timers every minute
+setInterval(() => {
+  document.querySelectorAll(".countdown-timer").forEach(timer => {
+    const todoItem = timer.closest(".todo-item");
+    if (todoItem) {
+      const todoId = parseInt(todoItem.id.replace("todo-", ""));
+      const todos = getAllTodos();
+      const todo = todos.find(t => t.id === todoId);
+      if (todo && todo.deadline) {
+        const now = Date.now();
+        const timeLeft = todo.deadline - now;
+        let countdownClass = 'normal';
+        let countdownText = '';
+        
+        if (timeLeft < 0) {
+          countdownText = 'OVERDUE';
+          countdownClass = 'urgent';
+          todoItem.classList.add('overdue');
+        } else if (timeLeft < 3600000) { // 1 hour
+          countdownText = 'Due in ' + Math.ceil(timeLeft / 60000) + ' minutes';
+          countdownClass = 'urgent';
+        } else if (timeLeft < 86400000) { // 24 hours
+          countdownText = 'Due in ' + Math.ceil(timeLeft / 3600000) + ' hours';
+          countdownClass = 'warning';
+        } else {
+          countdownText = 'Due in ' + Math.ceil(timeLeft / 86400000) + ' days';
+        }
+        
+        timer.textContent = countdownText;
+        timer.className = `countdown-timer ${countdownClass}`;
+      }
+    }
+  });
+  updateDashboard();
+}, 60000);
+
+// Initialize sound toggle button
+document.addEventListener('DOMContentLoaded', () => {
+  updateSoundToggle();
+});
+</script>
+
+</body>
+</html>
