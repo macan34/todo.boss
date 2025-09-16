@@ -831,8 +831,11 @@ button:active {
         </div>
         
         <div id="memberInfo" class="hidden" style="background: #f0f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #bae6fd;">
-          <p style="color: #0369a1; margin: 0; font-size: 0.9rem;">
-            💡 <strong>Member:</strong> Tugas akan selesai ketika SEMUA member yang ditugaskan sudah check. Check tugas Anda untuk berkontribusi!
+          <p style="color: #0369a1; margin: 0 0 0.5rem 0; font-size: 0.9rem;">
+            💡 <strong>Member:</strong> Tugas akan selesai ketika SEMUA member yang ditugaskan sudah check. Check tugas yang ditugaskan kepada Anda!
+          </p>
+          <p style="color: #0369a1; margin: 0; font-size: 0.85rem; font-style: italic;">
+            📋 Mentor hanya memantau progress dan tidak perlu melakukan checklist.
           </p>
         </div>
         
@@ -1147,6 +1150,8 @@ function autoCreateRoom() {
           showNotification(`${data.userName} joined the room`, "success");
         } else {
           handleData(data);
+          // Relay data to all other connections (member-to-member communication)
+          broadcastToOthers(data, c);
         }
       });
       
@@ -1370,13 +1375,17 @@ function renderTodo(todo) {
     `;
   }
   
-  // Show check button only if task is assigned to current user or unassigned (accessible to all)
-  const canCheck = isTaskAssignedToUser(todo, userName);
+  // Show check button only if task is assigned to current user and user is not mentor
+  const canCheck = isTaskAssignedToUser(todo, userName) && role !== "mentor";
   const checkButton = canCheck ? `
     <button onclick="toggleCompletion(${todo.id})" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-color); padding: 0.5rem 1rem; cursor: pointer; border-radius: 8px; transition: all 0.2s ease; font-size: 0.875rem; box-shadow: none; ${currentUserChecked ? 'background: #fef3c7; border-color: var(--warning-color); color: #92400e;' : ''}">
       <input type="checkbox" ${currentUserChecked ? 'checked' : ''} onchange="event.preventDefault()" style="width: 16px; height: 16px; margin: 0; accent-color: var(--success-color); cursor: pointer;">
       <span>${currentUserChecked ? '✅ Sudah Check' : 'Check Tugas'}</span>
     </button>
+  ` : role === "mentor" ? `
+    <div style="display: flex; align-items: center; gap: 0.5rem; background: #f0f4ff; color: #667eea; border: 1px solid #c7d2fe; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem;">
+      <span>👑 Mentor - Monitoring Only</span>
+    </div>
   ` : `
     <div style="display: flex; align-items: center; gap: 0.5rem; background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem;">
       <span>🚫 Not assigned to you</span>
@@ -1431,15 +1440,27 @@ function renderTodo(todo) {
 // Assignment utility functions
 function getAssignedMembers(todo) {
   if (!todo.assignedTo || todo.assignedTo === "all") {
-    return Array.from(roomMembers.keys());
+    // Return only members (exclude mentor) for "all" assignments
+    return Array.from(roomMembers.entries())
+      .filter(([name, info]) => info.role === "member")
+      .map(([name]) => name);
   } else {
     return [todo.assignedTo];
   }
 }
 
 function isTaskAssignedToUser(todo, username) {
+  // Get user's role
+  const userInfo = roomMembers.get(username);
+  const userRole = userInfo ? userInfo.role : "member";
+  
+  // Mentors should not be assigned tasks
+  if (userRole === "mentor") {
+    return false;
+  }
+  
   if (!todo.assignedTo || todo.assignedTo === "all") {
-    return true; // Unassigned or assigned to all
+    return true; // Unassigned or assigned to all members (excluding mentor)
   }
   return todo.assignedTo === username;
 }
@@ -1818,6 +1839,12 @@ function updateBulkControls() {
 
 function bulkComplete() {
   if (selectedTasks.size === 0) return;
+  
+  // Only allow members to bulk complete
+  if (role === "mentor") {
+    showNotification("Mentors cannot complete tasks - monitoring only", "warning");
+    return;
+  }
   
   selectedTasks.forEach(todoId => {
     const todos = getAllTodos();
@@ -2380,6 +2407,18 @@ function broadcast(msg) {
       console.log("Failed to send to main connection:", e);
     }
   }
+}
+
+function broadcastToOthers(msg, excludeConnection) {
+  connections.forEach(c => {
+    if (c !== excludeConnection) {
+      try {
+        c.send(msg);
+      } catch (e) {
+        console.log("Failed to relay to connection:", e);
+      }
+    }
+  });
 }
 
 function escapeHtml(str) {
