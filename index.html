@@ -968,7 +968,6 @@ function playSound(type = "notification") {
     
     // Different tones for different notification types
     if (type === "assignment") {
-      // Assignment notification: Higher pitch sequence
       oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
       oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
       oscillator.frequency.setValueAtTime(1200, audioContext.currentTime + 0.2);
@@ -1001,7 +1000,7 @@ function showNotification(message, type = "success") {
   notification.innerHTML = `
     <span class="notification-icon">${icon}</span>
     <span>${message}</span>
-    <button class="notification-close" onclick="this.parentElement.remove()">✕</button>
+    <button class="notification-close" onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer; margin-left: auto; padding: 0.5rem;">✕</button>
   `;
   
   container.appendChild(notification);
@@ -1028,7 +1027,7 @@ function updateMemberList() {
   
   memberListContainer.innerHTML = "";
   
-  // Add mentor
+  // Add members
   roomMembers.forEach((memberInfo, memberName) => {
     const chip = document.createElement("div");
     chip.className = `member-chip ${memberInfo.role}`;
@@ -1047,7 +1046,6 @@ function updateAssigneeOptions() {
   const assigneeSelect = document.getElementById("todoAssignee");
   if (!assigneeSelect) return;
   
-  // Store current value
   const currentValue = assigneeSelect.value;
   
   // Clear existing options except default ones
@@ -1160,6 +1158,11 @@ function autoCreateRoom() {
       });
     });
   });
+
+  peer.on("error", (err) => {
+    console.error("Peer error:", err);
+    showNotification("Error creating room: " + err.message, "error");
+  });
 }
 
 function joinRoom() {
@@ -1188,9 +1191,15 @@ function autoJoinRoom() {
       showNotification("Connected to room successfully!", "success");
     });
     
-    conn.on("error", () => {
+    conn.on("error", (err) => {
+      console.error("Connection error:", err);
       showNotification("Failed to connect to room. Check Room ID.", "error");
     });
+  });
+
+  peer.on("error", (err) => {
+    console.error("Peer error:", err);
+    showNotification("Error joining room: " + err.message, "error");
   });
 }
 
@@ -1530,7 +1539,10 @@ function refreshTodoDisplay(todoId) {
 }
 
 function toggleComment(todoId) {
-  document.getElementById("commentBox-" + todoId).classList.toggle("hidden");
+  const commentBox = document.getElementById("commentBox-" + todoId);
+  if (commentBox) {
+    commentBox.classList.toggle("hidden");
+  }
 }
 
 function previewPhoto(todoId) {
@@ -1617,8 +1629,11 @@ function sendPhoto(todoId) {
     
     // Clear inputs
     fileInput.value = "";
-    document.getElementById("preview-" + todoId).innerHTML = "";
-    document.getElementById("preview-" + todoId).classList.add("hidden");
+    const previewBox = document.getElementById("preview-" + todoId);
+    if (previewBox) {
+      previewBox.innerHTML = "";
+      previewBox.classList.add("hidden");
+    }
     
     playSound();
     showNotification("Photo sent!", "success");
@@ -1772,7 +1787,10 @@ function handleData(data) {
     updateDashboard();
   }
   if (data.type === "deleteTodo") {
-    document.getElementById("todo-" + data.todoId)?.remove();
+    const todoElement = document.getElementById("todo-" + data.todoId);
+    if (todoElement) {
+      todoElement.remove();
+    }
     saveTodos();
     updateEmptyState();
     updateDashboard();
@@ -1790,18 +1808,6 @@ function handleData(data) {
   if (data.type === "memberCheck") {
     handleMemberCheck(data);
   }
-  if (data.type === "assignmentNotification") {
-    // Handle assignment notifications from mentor
-    showNotification(data.message, "warning");
-    playSound("assignment");
-    
-    if ("Notification" in window && Notification.permission === "granted") {
-      new Notification("TodoPro - Assignment Update", {
-        body: data.message,
-        icon: "/favicon.ico"
-      });
-    }
-  }
 }
 
 function refreshAllTodoDisplays() {
@@ -1815,6 +1821,8 @@ function refreshAllTodoDisplays() {
 // Task selection and bulk operations
 function toggleTaskSelection(todoId) {
   const todoDiv = document.getElementById("todo-" + todoId);
+  if (!todoDiv) return;
+  
   if (selectedTasks.has(todoId)) {
     selectedTasks.delete(todoId);
     todoDiv.classList.remove("selected");
@@ -1877,7 +1885,10 @@ function bulkDelete() {
   if (!confirm(`Delete ${selectedTasks.size} selected tasks?`)) return;
   
   selectedTasks.forEach(todoId => {
-    document.getElementById("todo-" + todoId)?.remove();
+    const todoElement = document.getElementById("todo-" + todoId);
+    if (todoElement) {
+      todoElement.remove();
+    }
     broadcast({ type: "deleteTodo", todoId });
   });
   
@@ -1922,8 +1933,13 @@ function filterTasks() {
   const todos = document.querySelectorAll(".todo-item");
   
   todos.forEach(todoDiv => {
-    const title = todoDiv.querySelector("strong").textContent.toLowerCase();
-    const desc = todoDiv.querySelector("span").textContent.toLowerCase();
+    const titleElement = todoDiv.querySelector("strong");
+    const descElement = todoDiv.querySelector("span");
+    
+    if (!titleElement || !descElement) return;
+    
+    const title = titleElement.textContent.toLowerCase();
+    const desc = descElement.textContent.toLowerCase();
     const priority = todoDiv.classList.contains("priority-high") ? "high" : 
                     todoDiv.classList.contains("priority-medium") ? "medium" : 
                     todoDiv.classList.contains("priority-low") ? "low" : "all";
@@ -1972,7 +1988,6 @@ function saveTodos() {
     const id = parseInt(div.id.replace("todo-", ""));
     const titleElement = div.querySelector("strong");
     const descElement = div.querySelector("span");
-    const userElement = div.querySelector(".todo-meta") || div.querySelector("div[style*='font-style: italic']");
     
     if (!titleElement || !descElement) return;
     
@@ -1985,6 +2000,7 @@ function saveTodos() {
     title = title.trim();
     
     const desc = descElement.textContent;
+    const userElement = div.querySelector("div[style*='font-style: italic']");
     const user = userElement ? userElement.textContent.replace("👤 ", "") : userName;
     const completed = div.classList.contains('completed');
     
@@ -2068,7 +2084,12 @@ function saveTodos() {
 function loadLocalTodos() {
   const saved = localStorage.getItem("todos");
   if (saved) {
-    JSON.parse(saved).forEach(todo => renderTodo(todo));
+    try {
+      JSON.parse(saved).forEach(todo => renderTodo(todo));
+    } catch (e) {
+      console.error("Error loading todos:", e);
+      localStorage.removeItem("todos");
+    }
   }
   if (role) {
     updateEmptyState();
@@ -2190,7 +2211,10 @@ function deleteTodo(todoId) {
   
   if (!confirm("Yakin hapus tugas ini?")) return;
   
-  document.getElementById("todo-" + todoId)?.remove();
+  const todoElement = document.getElementById("todo-" + todoId);
+  if (todoElement) {
+    todoElement.remove();
+  }
   saveTodos();
   broadcast({ type: "deleteTodo", todoId });
   updateEmptyState();
@@ -2241,12 +2265,14 @@ function setupKeyboardShortcuts() {
         case 'n':
           e.preventDefault();
           if (role === "mentor") {
-            document.getElementById("todoTitle").focus();
+            const todoTitleInput = document.getElementById("todoTitle");
+            if (todoTitleInput) todoTitleInput.focus();
           }
           break;
         case 'f':
           e.preventDefault();
-          document.getElementById("searchInput").focus();
+          const searchInput = document.getElementById("searchInput");
+          if (searchInput) searchInput.focus();
           break;
         case 'a':
           e.preventDefault();
@@ -2262,18 +2288,27 @@ function setupKeyboardShortcuts() {
           break;
         case '1':
           e.preventDefault();
-          document.getElementById("priorityFilter").value = "high";
-          filterTasks();
+          const priorityFilter = document.getElementById("priorityFilter");
+          if (priorityFilter) {
+            priorityFilter.value = "high";
+            filterTasks();
+          }
           break;
         case '2':
           e.preventDefault();
-          document.getElementById("priorityFilter").value = "medium";
-          filterTasks();
+          const priorityFilter2 = document.getElementById("priorityFilter");
+          if (priorityFilter2) {
+            priorityFilter2.value = "medium";
+            filterTasks();
+          }
           break;
         case '3':
           e.preventDefault();
-          document.getElementById("priorityFilter").value = "low";
-          filterTasks();
+          const priorityFilter3 = document.getElementById("priorityFilter");
+          if (priorityFilter3) {
+            priorityFilter3.value = "low";
+            filterTasks();
+          }
           break;
         case 'e':
           if (e.shiftKey) {
@@ -2331,11 +2366,16 @@ function selectAllTasks() {
 
 function toggleShortcuts() {
   const modal = document.getElementById("shortcutsModal");
-  modal.style.display = modal.style.display === "flex" ? "none" : "flex";
+  if (modal) {
+    modal.style.display = modal.style.display === "flex" ? "none" : "flex";
+  }
 }
 
 function closeShortcuts() {
-  document.getElementById("shortcutsModal").style.display = "none";
+  const modal = document.getElementById("shortcutsModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
 }
 
 // Deadline notifications
@@ -2364,6 +2404,9 @@ function checkDeadlines() {
           });
         }
       }
+      // Notify if overdue
+      else if (timeLeft < 0) {
+        const hoursOverdue = Math.ceil(Math.abs(timeLeft) / (60 * 60 * 1000));
       // Notify if overdue
       else if (timeLeft < 0) {
         const hoursOverdue = Math.ceil(Math.abs(timeLeft) / (60 * 60 * 1000));
@@ -2473,7 +2516,7 @@ setInterval(() => {
   updateDashboard();
 }, 60000);
 
-// Initialize sound toggle button
+// Initialize sound toggle button after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   updateSoundToggle();
 });
