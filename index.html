@@ -572,6 +572,59 @@ button:active {
   margin-bottom: 0.5rem;
 }
 
+/* === ASSIGNMENT ANIMATIONS === */
+@keyframes highlightAssignment {
+  0% { 
+    transform: scale(1);
+    background: var(--bg-primary);
+    border-color: var(--assignment-color);
+  }
+  25% { 
+    transform: scale(1.02);
+    background: #f3e8ff;
+    border-color: var(--assignment-color);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  }
+  50% { 
+    transform: scale(1.02);
+    background: #f3e8ff;
+    border-color: var(--assignment-color);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+  }
+  100% { 
+    transform: scale(1);
+    background: var(--bg-primary);
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-light);
+  }
+}
+
+@keyframes highlightTeamTask {
+  0% { 
+    transform: scale(1);
+    background: var(--bg-primary);
+    border-color: var(--success-color);
+  }
+  25% { 
+    transform: scale(1.02);
+    background: #f0fdf4;
+    border-color: var(--success-color);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+  50% { 
+    transform: scale(1.02);
+    background: #f0fdf4;
+    border-color: var(--success-color);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+  }
+  100% { 
+    transform: scale(1);
+    background: var(--bg-primary);
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-light);
+  }
+}
+
 /* === ANIMATIONS === */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -910,7 +963,18 @@ function playSound(type = "notification") {
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
     
-    oscillator.frequency.value = type === "warning" ? 800 : 600;
+    // Different tones for different notification types
+    if (type === "assignment") {
+      // Assignment notification: Higher pitch sequence
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
+      oscillator.frequency.setValueAtTime(1200, audioContext.currentTime + 0.2);
+    } else if (type === "warning") {
+      oscillator.frequency.value = 800;
+    } else {
+      oscillator.frequency.value = 600;
+    }
+    
     oscillator.type = "sine";
     
     gainNode.gain.setValueAtTime(0, audioContext.currentTime);
@@ -1182,6 +1246,15 @@ function addTodo() {
   renderTodo(todo);
   saveTodos();
   broadcast(todo);
+  
+  // Show assignment notification for mentor
+  if (assignee && assignee !== "unassigned" && assignee !== "") {
+    if (assignee === "all") {
+      showNotification(`Task "${title}" assigned to all members!`, "success");
+    } else {
+      showNotification(`Task "${title}" assigned to ${assignee}!`, "success");
+    }
+  }
   
   // Clear form
   document.getElementById("todoTitle").value = "";
@@ -1611,6 +1684,56 @@ function handleData(data) {
     renderTodo(data);
     saveTodos();
     updateDashboard();
+    
+    // Show assignment notification when receiving new task
+    if (data.assignedTo) {
+      if (data.assignedTo === userName) {
+        playSound("assignment");
+        showNotification(`🎯 New task assigned to you: "${data.title}"`, "warning");
+        
+        // Browser notification for assigned tasks
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("TodoPro - New Task Assigned", {
+            body: `You have been assigned: "${data.title}"`,
+            icon: "/favicon.ico"
+          });
+        }
+        
+        // Add visual highlight animation
+        setTimeout(() => {
+          const taskElement = document.getElementById("todo-" + data.id);
+          if (taskElement) {
+            taskElement.style.animation = "highlightAssignment 2s ease-in-out";
+            setTimeout(() => {
+              taskElement.style.animation = "";
+            }, 2000);
+          }
+        }, 100);
+        
+      } else if (data.assignedTo === "all") {
+        playSound("assignment");
+        showNotification(`👥 New team task: "${data.title}"`, "success");
+        
+        // Browser notification for team tasks
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("TodoPro - New Team Task", {
+            body: `New team task: "${data.title}"`,
+            icon: "/favicon.ico"
+          });
+        }
+        
+        // Add visual highlight animation
+        setTimeout(() => {
+          const taskElement = document.getElementById("todo-" + data.id);
+          if (taskElement) {
+            taskElement.style.animation = "highlightTeamTask 2s ease-in-out";
+            setTimeout(() => {
+              taskElement.style.animation = "";
+            }, 2000);
+          }
+        }, 100);
+      }
+    }
   }
   if (data.type === "comment" || data.type === "photo") {
     appendComment(data);
@@ -1645,6 +1768,18 @@ function handleData(data) {
   }
   if (data.type === "memberCheck") {
     handleMemberCheck(data);
+  }
+  if (data.type === "assignmentNotification") {
+    // Handle assignment notifications from mentor
+    showNotification(data.message, "warning");
+    playSound("assignment");
+    
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("TodoPro - Assignment Update", {
+        body: data.message,
+        icon: "/favicon.ico"
+      });
+    }
   }
 }
 
